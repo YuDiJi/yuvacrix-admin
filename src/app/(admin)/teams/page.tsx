@@ -1,0 +1,1 @@
+import { Suspense } from "react"; import { TeamsTable } from "@/components/teams/TeamsTable"; export default function TeamsPage(){return <Suspense fallback={<div className="h-100 animate-pulse rounded-2xl bg-white"/>}><TeamsTable/></Suspense>}

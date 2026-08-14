@@ -1,0 +1,28 @@
+"use client";
+
+import { Activity, Radio, Shield, Trophy, UserRound, Users } from "lucide-react";
+import { AccessDenied } from "@/components/common/AccessDenied";
+import { PageHeader } from "@/components/common/PageHeader";
+import { StatCard } from "@/components/common/StatCard";
+import { DashboardAnalytics } from "@/components/dashboard/DashboardAnalytics";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { hasPermission } from "@/lib/adminPermissions";
+import { getApiErrorMessage } from "@/lib/apiError";
+import { formatDate, formatNumber } from "@/lib/format";
+import { useGetCurrentAdminQuery } from "@/store/api/authApi";
+import { useGetDashboardQuery } from "@/store/api/dashboardApi";
+import type { DashboardRecentRecord, RecentUser } from "@/types/admin/dashboard";
+
+function Badge({ value }: { value: string }) { const normalized = value.toLowerCase(); const className = normalized.includes("active") || normalized.includes("approved") ? "bg-green-50 text-green-700" : normalized.includes("suspend") || normalized.includes("reject") ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"; return <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${className}`}>{value.replaceAll("_", " ")}</span>; }
+function RecentUsers({ users }: { users: RecentUser[] }) { return <section className="rounded-2xl border border-line bg-white p-5 shadow-sm"><h3 className="font-semibold text-navy">Recent users</h3>{users.length ? <div className="mt-3 divide-y divide-line">{users.map((user) => <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><p className="text-sm font-medium text-navy">{user.fullName}</p><p className="mt-0.5 text-xs text-slate-500">{user.mobile} · {formatDate(user.createdAt)}</p></div><Badge value={user.moderationStatus || user.status} /></div>)}</div> : <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-slate-500">No recent users.</p>}</section>; }
+function recordLabel(record: DashboardRecentRecord, fallback: string) { return record.name ?? record.title ?? fallback; }
+function RecentRecords({ title, records, empty }: { title: string; records: DashboardRecentRecord[]; empty: string }) { return <section className="rounded-2xl border border-line bg-white p-5 shadow-sm"><h3 className="font-semibold text-navy">{title}</h3>{records.length ? <div className="mt-3 divide-y divide-line">{records.map((record, index) => <div key={record.id ?? `${title}-${index}`} className="flex items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="truncate text-sm font-medium text-navy">{recordLabel(record, `${title} record`)}</p><p className="mt-0.5 text-xs text-slate-500">{formatDate(record.createdAt)}</p></div>{record.status && <Badge value={record.status} />}</div>)}</div> : <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-slate-500">{empty}</p>}</section>; }
+export default function DashboardPage() {
+  const currentAdmin = useGetCurrentAdminQuery(); const dashboard = useGetDashboardQuery(undefined, { skip: !hasPermission(currentAdmin.data?.admin, "dashboard.read") });
+  if (!hasPermission(currentAdmin.data?.admin, "dashboard.read")) return <AccessDenied description="Your account does not include dashboard access. Contact a super administrator if you need this permission." />;
+  if (dashboard.isLoading) return <DashboardSkeleton />;
+  if (dashboard.isError) return <section className="grid min-h-100 place-items-center rounded-2xl border border-line bg-white p-8 text-center shadow-sm"><div><h2 className="text-xl font-bold text-navy">Unable to load dashboard</h2><p className="mt-2 max-w-md text-sm text-slate-500">{getApiErrorMessage(dashboard.error, "Please try again in a moment.")}</p><button type="button" onClick={() => dashboard.refetch()} className="mt-5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">Try Again</button></div></section>;
+  const data = dashboard.data; if (!data) return null;
+  const stats = [["Total Users", data.totalUsers, Users, "blue"], ["Total Players", data.totalPlayers, UserRound, "blue"], ["Total Teams", data.totalTeams, Shield, "green"], ["Total Matches", data.totalMatches, Trophy, "amber"], ["Live Matches", data.liveMatches, Radio, "green"], ["Active Tournaments", data.activeTournaments, Activity, "blue"]] as const;
+  return <><PageHeader title="Dashboard overview" description="A live view of the YuvaCrix platform." /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{stats.map(([label, value, icon, tone]) => <StatCard key={label} label={label} value={formatNumber(value)} icon={icon} tone={tone} />)}</div><section className="mt-6 grid gap-4 rounded-2xl border border-line bg-white p-5 shadow-sm sm:grid-cols-2 xl:grid-cols-4"><div><p className="text-sm text-slate-500">New users today</p><p className="mt-2 text-2xl font-bold text-navy">{formatNumber(data.newUsersToday)}</p></div><div><p className="text-sm text-slate-500">New users this week</p><p className="mt-2 text-2xl font-bold text-navy">{formatNumber(data.newUsersThisWeek)}</p></div><div><p className="text-sm text-slate-500">Matches today</p><p className="mt-2 text-2xl font-bold text-navy">{formatNumber(data.matchesToday)}</p></div><div><p className="text-sm text-slate-500">Total tournaments</p><p className="mt-2 text-2xl font-bold text-navy">{formatNumber(data.totalTournaments)}</p></div></section><div className="mt-6"><DashboardAnalytics /></div><div className="mt-6 grid gap-6 xl:grid-cols-3"><RecentUsers users={data.recentUsers} /><RecentRecords title="Recent matches" records={data.recentMatches} empty="No recent matches." /><RecentRecords title="Recent tournaments" records={data.recentTournaments} empty="No recent tournaments." /></div></>;
+}

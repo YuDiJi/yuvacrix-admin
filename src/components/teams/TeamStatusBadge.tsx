@@ -1,0 +1,2 @@
+import type { TeamModerationStatus } from "@/types/admin/team";
+export function TeamStatusBadge({ status }: { status: TeamModerationStatus | string | null | undefined }) { const styles: Record<string, string> = { ACTIVE: "bg-green-50 text-green-700", SUSPENDED: "bg-amber-50 text-amber-700", REMOVED: "bg-red-50 text-red-700" }; return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${status ? (styles[status] ?? "bg-slate-100 text-slate-600") : "bg-slate-100 text-slate-500"}`}>{status?.replaceAll("_", " ") ?? "Unavailable"}</span>; }

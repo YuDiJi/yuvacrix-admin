@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #0D1B3E;
+  --color-brand: #1B3FA0;
+  --color-accent: #4B8BFF;
+  --color-surface: #F5F7FB;
+  --color-line: #E8ECF2;
+  --font-sans: var(--font-geist), Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { min-height: 100%; }
+body { min-height: 100vh; margin: 0; background: #F5F7FB; color: #0D1B3E; font-family: var(--font-geist), Arial, sans-serif; }
+button, input { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #4B8BFF; outline-offset: 2px; }
+[role="dialog"] { max-height: 90vh; overflow-y: auto; }
